@@ -1,21 +1,68 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import MiningDashboard from '@/components/MiningDashboard';
 import MiningTasks from '@/components/MiningTasks';
 import Profile from '@/components/Profile';
+import Auth from '@/components/Auth';
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [user, setUser] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const savedUser = localStorage.getItem('xjr_user');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      setUser(userData);
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleAuthSuccess = (userData: any) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('xjr_user');
+    setUser(null);
+    setIsAuthenticated(false);
+    setActiveTab('dashboard');
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+    });
+  };
+
+  const updateUserBalance = (newBalance: number) => {
+    const updatedUser = { ...user, balance: newBalance };
+    setUser(updatedUser);
+    localStorage.setItem('xjr_user', JSON.stringify(updatedUser));
+  };
+
+  const updateUserProfile = (updatedData: any) => {
+    const updatedUser = { ...user, ...updatedData };
+    setUser(updatedUser);
+    localStorage.setItem('xjr_user', JSON.stringify(updatedUser));
+  };
+
+  if (!isAuthenticated) {
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <MiningDashboard />;
+        return <MiningDashboard user={user} updateBalance={updateUserBalance} />;
       case 'tasks':
-        return <MiningTasks />;
+        return <MiningTasks user={user} updateBalance={updateUserBalance} />;
       case 'profile':
-        return <Profile />;
+        return <Profile user={user} updateProfile={updateUserProfile} />;
       case 'community':
         return (
           <div className="text-center py-20">
@@ -24,13 +71,18 @@ const Index = () => {
           </div>
         );
       default:
-        return <MiningDashboard />;
+        return <MiningDashboard user={user} updateBalance={updateUserBalance} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-mining-gradient">
-      <Header activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Header 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        user={user}
+        onLogout={handleLogout}
+      />
       
       {/* Navigation */}
       <div className="container mx-auto px-4 py-6">
@@ -63,8 +115,19 @@ const Index = () => {
 
       {/* Floating Claim Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <button className="bg-gradient-to-r from-mining-cyan-500 to-mining-blue-500 hover:from-mining-cyan-400 hover:to-mining-blue-400 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse-slow">
-          <div className="text-sm">Claim 100 DMH</div>
+        <button 
+          onClick={() => {
+            // Claim reward logic
+            const newBalance = user.balance + 100;
+            updateUserBalance(newBalance);
+            toast({
+              title: "Reward Claimed!",
+              description: "You earned 100 XJR COIN!",
+            });
+          }}
+          className="bg-gradient-to-r from-mining-cyan-500 to-mining-blue-500 hover:from-mining-cyan-400 hover:to-mining-blue-400 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse-slow"
+        >
+          <div className="text-sm">Claim 100 XJR</div>
           <div className="text-xs opacity-75">Available in 2h 34m</div>
         </button>
       </div>

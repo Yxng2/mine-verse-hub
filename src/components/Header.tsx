@@ -7,20 +7,32 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, Settings, Activity, Users } from 'lucide-react';
+import { User, Settings, Activity, Users, LogOut, Wallet } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  user: any;
+  onLogout: () => void;
 }
 
-const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
+const Header = ({ activeTab, setActiveTab, user, onLogout }: HeaderProps) => {
+  const { toast } = useToast();
+  
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
     { id: 'tasks', label: 'Mining Tasks', icon: Activity },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'community', label: 'Community', icon: Users }
   ];
+
+  const handleWithdraw = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Withdrawal feature is coming soon! Stay tuned for updates.",
+    });
+  };
 
   return (
     <header className="bg-mining-dark-800/90 backdrop-blur-md border-b border-mining-cyan-500/20 sticky top-0 z-50">
@@ -32,7 +44,7 @@ const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
               <Activity className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">DMH</h1>
+              <h1 className="text-xl font-bold text-white">XJR COIN</h1>
               <p className="text-xs text-mining-cyan-400">Decentralized Mining Hub</p>
             </div>
           </div>
@@ -62,7 +74,7 @@ const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
           {/* User Menu */}
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm font-semibold text-white">1,247 DMH</p>
+              <p className="text-sm font-semibold text-white">{user?.balance || 0} XJR</p>
               <p className="text-xs text-mining-cyan-400">Available Balance</p>
             </div>
             
@@ -70,9 +82,9 @@ const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10 border-2 border-mining-cyan-500/30">
-                    <AvatarImage src="/placeholder.svg" alt="Profile" />
+                    <AvatarImage src={user?.profileImage || "/placeholder.svg"} alt="Profile" />
                     <AvatarFallback className="bg-mining-cyan-500/20 text-mining-cyan-400">
-                      MR
+                      {user?.username?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -88,9 +100,23 @@ const Header = ({ activeTab, setActiveTab }: HeaderProps) => {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile Settings</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-gray-300 hover:text-mining-cyan-400 hover:bg-mining-cyan-500/10"
+                  onClick={handleWithdraw}
+                >
+                  <Wallet className="mr-2 h-4 w-4" />
+                  <span>Withdraw</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem className="text-gray-300 hover:text-mining-cyan-400 hover:bg-mining-cyan-500/10">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  className="text-gray-300 hover:text-red-400 hover:bg-red-500/10"
+                  onClick={onLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
