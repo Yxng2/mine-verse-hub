@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,9 +12,40 @@ interface MiningDashboardProps {
 const MiningDashboard = ({ user, updateBalance }: MiningDashboardProps) => {
   const { toast } = useToast();
 
+  const getTimeUntilNextClaim = () => {
+    if (!user.lastClaimTime) return 0;
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+    const timeSinceLastClaim = Date.now() - new Date(user.lastClaimTime).getTime();
+    return Math.max(0, oneHour - timeSinceLastClaim);
+  };
+
+  const formatTimeRemaining = (milliseconds: number) => {
+    if (milliseconds === 0) return "Available now!";
+    const minutes = Math.floor(milliseconds / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const timeUntilNextClaim = getTimeUntilNextClaim();
+  const canClaim = timeUntilNextClaim === 0;
+
   const handleClaimReward = () => {
+    if (!canClaim) {
+      toast({
+        title: "Claim Not Available",
+        description: `Please wait ${formatTimeRemaining(timeUntilNextClaim)} before claiming again.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     const newBalance = user.balance + 100;
+    const updatedUser = { ...user, balance: newBalance, lastClaimTime: new Date().toISOString() };
     updateBalance(newBalance);
+    
+    // Update localStorage with the new claim time
+    localStorage.setItem('xjr_user', JSON.stringify(updatedUser));
+    
     toast({
       title: "Reward Claimed!",
       description: "You earned 100 XJR COIN!",
@@ -65,7 +95,9 @@ const MiningDashboard = ({ user, updateBalance }: MiningDashboardProps) => {
             <Activity className="h-4 w-4 text-mining-cyan-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">2h 34m</div>
+            <div className="text-2xl font-bold text-white">
+              {canClaim ? "Ready!" : formatTimeRemaining(timeUntilNextClaim)}
+            </div>
             <p className="text-xs text-mining-cyan-400">Next 100 XJR claim</p>
           </CardContent>
         </Card>
@@ -109,9 +141,13 @@ const MiningDashboard = ({ user, updateBalance }: MiningDashboardProps) => {
             <CardTitle className="text-white">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full mining-button" onClick={handleClaimReward}>
+            <Button 
+              className={`w-full ${canClaim ? 'mining-button' : 'bg-gray-600 cursor-not-allowed'}`}
+              onClick={handleClaimReward}
+              disabled={!canClaim}
+            >
               <Activity className="mr-2 h-4 w-4" />
-              Claim 100 XJR (Available in 2h 34m)
+              {canClaim ? 'Claim 100 XJR (Available!)' : `Claim 100 XJR (${formatTimeRemaining(timeUntilNextClaim)})`}
             </Button>
             
             <Button variant="outline" className="w-full border-mining-cyan-500/30 text-mining-cyan-400 hover:bg-mining-cyan-500/10">

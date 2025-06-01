@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Mail, User, Gift } from 'lucide-react';
+import { Mail, User, Gift, Eye, EyeOff } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface AuthProps {
@@ -16,9 +16,11 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
   const [isSignup, setIsSignup] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
+    password: '',
     username: '',
     referralCode: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -28,24 +30,58 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
 
     // Simulate API call
     setTimeout(() => {
-      const userData = {
-        email: formData.email,
-        username: formData.username || formData.email.split('@')[0],
-        balance: 0, // Start with 0 balance
-        joinDate: new Date().toLocaleDateString(),
-        profileImage: null,
-        referralCode: 'XJR-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
-        usedReferral: formData.referralCode
-      };
+      if (isSignup) {
+        // Sign up logic
+        const userData = {
+          email: formData.email,
+          username: formData.username || formData.email.split('@')[0],
+          balance: 0,
+          joinDate: new Date().toLocaleDateString(),
+          profileImage: null,
+          referralCode: 'XJR-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
+          usedReferral: formData.referralCode,
+          lastClaimTime: null
+        };
 
-      localStorage.setItem('xjr_user', JSON.stringify(userData));
-      
-      toast({
-        title: isSignup ? "Account Created!" : "Welcome Back!",
-        description: isSignup ? "Your XJR COIN account has been created successfully." : "You've been logged in successfully.",
-      });
+        // Store user with password
+        const userWithPassword = { ...userData, password: formData.password };
+        localStorage.setItem('xjr_user', JSON.stringify(userWithPassword));
+        
+        toast({
+          title: "Account Created!",
+          description: "Your XJR COIN account has been created successfully.",
+        });
 
-      onAuthSuccess(userData);
+        onAuthSuccess(userData);
+      } else {
+        // Sign in logic
+        const savedUser = localStorage.getItem('xjr_user');
+        if (savedUser) {
+          const userData = JSON.parse(savedUser);
+          if (userData.email === formData.email && userData.password === formData.password) {
+            toast({
+              title: "Welcome Back!",
+              description: "You've been logged in successfully.",
+            });
+            
+            // Remove password from the data passed to the app
+            const { password, ...userDataWithoutPassword } = userData;
+            onAuthSuccess(userDataWithoutPassword);
+          } else {
+            toast({
+              title: "Login Failed",
+              description: "Invalid email or password.",
+              variant: "destructive"
+            });
+          }
+        } else {
+          toast({
+            title: "Login Failed",
+            description: "No account found with this email.",
+            variant: "destructive"
+          });
+        }
+      }
       setIsLoading(false);
     }, 1500);
   };
@@ -80,6 +116,28 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
                 className="bg-mining-dark-700/50 border-mining-cyan-500/20 text-white"
                 required
               />
+            </div>
+
+            <div>
+              <Label htmlFor="password" className="text-gray-300">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  className="bg-mining-dark-700/50 border-mining-cyan-500/20 text-white pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-mining-cyan-400"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
 
             {isSignup && (

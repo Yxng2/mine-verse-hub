@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import MiningDashboard from '@/components/MiningDashboard';
@@ -18,7 +17,9 @@ const Index = () => {
     const savedUser = localStorage.getItem('xjr_user');
     if (savedUser) {
       const userData = JSON.parse(savedUser);
-      setUser(userData);
+      // Remove password from the state
+      const { password, ...userDataWithoutPassword } = userData;
+      setUser(userDataWithoutPassword);
       setIsAuthenticated(true);
     }
   }, []);
@@ -42,7 +43,14 @@ const Index = () => {
   const updateUserBalance = (newBalance: number) => {
     const updatedUser = { ...user, balance: newBalance };
     setUser(updatedUser);
-    localStorage.setItem('xjr_user', JSON.stringify(updatedUser));
+    
+    // Get the full user data from localStorage to preserve password
+    const savedUser = localStorage.getItem('xjr_user');
+    if (savedUser) {
+      const fullUserData = JSON.parse(savedUser);
+      const updatedFullUser = { ...fullUserData, balance: newBalance };
+      localStorage.setItem('xjr_user', JSON.stringify(updatedFullUser));
+    }
   };
 
   const updateUserProfile = (updatedData: any) => {
@@ -117,18 +125,45 @@ const Index = () => {
       <div className="fixed bottom-6 right-6 z-50">
         <button 
           onClick={() => {
-            // Claim reward logic
-            const newBalance = user.balance + 100;
-            updateUserBalance(newBalance);
-            toast({
-              title: "Reward Claimed!",
-              description: "You earned 100 XJR COIN!",
-            });
+            // Get current user data from localStorage for accurate claim time
+            const savedUser = localStorage.getItem('xjr_user');
+            if (savedUser) {
+              const userData = JSON.parse(savedUser);
+              const getTimeUntilNextClaim = () => {
+                if (!userData.lastClaimTime) return 0;
+                const oneHour = 60 * 60 * 1000;
+                const timeSinceLastClaim = Date.now() - new Date(userData.lastClaimTime).getTime();
+                return Math.max(0, oneHour - timeSinceLastClaim);
+              };
+              
+              const timeUntilNextClaim = getTimeUntilNextClaim();
+              const canClaim = timeUntilNextClaim === 0;
+              
+              if (canClaim) {
+                const newBalance = user.balance + 100;
+                const updatedUser = { ...userData, balance: newBalance, lastClaimTime: new Date().toISOString() };
+                updateUserBalance(newBalance);
+                localStorage.setItem('xjr_user', JSON.stringify(updatedUser));
+                
+                toast({
+                  title: "Reward Claimed!",
+                  description: "You earned 100 XJR COIN!",
+                });
+              } else {
+                const minutes = Math.floor(timeUntilNextClaim / (1000 * 60));
+                const seconds = Math.floor((timeUntilNextClaim % (1000 * 60)) / 1000);
+                toast({
+                  title: "Claim Not Available",
+                  description: `Please wait ${minutes}m ${seconds}s before claiming again.`,
+                  variant: "destructive"
+                });
+              }
+            }
           }}
           className="bg-gradient-to-r from-mining-cyan-500 to-mining-blue-500 hover:from-mining-cyan-400 hover:to-mining-blue-400 text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse-slow"
         >
           <div className="text-sm">Claim 100 XJR</div>
-          <div className="text-xs opacity-75">Available in 2h 34m</div>
+          <div className="text-xs opacity-75">Check timer for availability</div>
         </button>
       </div>
     </div>
