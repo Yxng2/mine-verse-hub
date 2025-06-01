@@ -1,9 +1,8 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Activity, User, Users } from 'lucide-react';
+import { Activity, User, Users, Facebook, Instagram, UserCheck, Gift } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface MiningTasksProps {
@@ -22,6 +21,122 @@ const MiningTasks = ({ user, updateBalance }: MiningTasksProps) => {
       description: `You earned ${taskReward} XJR COIN!`,
     });
   };
+
+  const handleSocialTask = (taskId: string, taskReward: number, url?: string) => {
+    // Get current user data from localStorage
+    const savedUser = localStorage.getItem('xjr_user');
+    if (!savedUser) return;
+
+    const userData = JSON.parse(savedUser);
+    const completedTasks = userData.completedTasks || [];
+
+    // Check if task is already completed
+    if (completedTasks.includes(taskId)) {
+      toast({
+        title: "Task Already Completed",
+        description: "You have already claimed this reward.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Open URL in new tab if provided
+    if (url) {
+      window.open(url, '_blank');
+    }
+
+    // Mark task as completed and update balance
+    const updatedCompletedTasks = [...completedTasks, taskId];
+    const newBalance = user.balance + taskReward;
+    
+    const updatedUser = {
+      ...userData,
+      balance: newBalance,
+      completedTasks: updatedCompletedTasks
+    };
+
+    localStorage.setItem('xjr_user', JSON.stringify(updatedUser));
+    updateBalance(newBalance);
+
+    toast({
+      title: "Task Completed!",
+      description: `You earned ${taskReward} XJR COIN!`,
+    });
+  };
+
+  const handleNameTask = () => {
+    if (!user.username || user.username === user.email?.split('@')[0]) {
+      toast({
+        title: "Set Your Name First",
+        description: "Please go to Profile and set a custom username to claim this reward.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    handleSocialTask('set-name', 20);
+  };
+
+  const handleReferralTask = () => {
+    const referralCount = user.referralCount || 0;
+    if (referralCount < 5) {
+      toast({
+        title: "Need More Referrals",
+        description: `You need ${5 - referralCount} more referrals to claim this reward.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    handleSocialTask('5-referrals', 100);
+  };
+
+  const isTaskCompleted = (taskId: string) => {
+    const savedUser = localStorage.getItem('xjr_user');
+    if (!savedUser) return false;
+    const userData = JSON.parse(savedUser);
+    return (userData.completedTasks || []).includes(taskId);
+  };
+
+  const socialTasks = [
+    {
+      id: 'follow-facebook',
+      title: 'Follow Our Facebook',
+      description: 'Follow our official Facebook page and stay updated',
+      reward: 25,
+      icon: Facebook,
+      url: 'https://www.facebook.com/profile.php?id=61576961519749',
+      action: () => handleSocialTask('follow-facebook', 25, 'https://www.facebook.com/profile.php?id=61576961519749')
+    },
+    {
+      id: 'follow-instagram',
+      title: 'Follow Our Instagram',
+      description: 'Follow our Instagram for daily updates and news',
+      reward: 50,
+      icon: Instagram,
+      url: 'https://www.instagram.com/xjr_coin?igsh=Zjdkajc0YmVqZm8y',
+      action: () => handleSocialTask('follow-instagram', 50, 'https://www.instagram.com/xjr_coin?igsh=Zjdkajc0YmVqZm8y')
+    },
+    {
+      id: 'set-name',
+      title: 'Set Your Profile Name',
+      description: 'Customize your profile with a unique username',
+      reward: 20,
+      icon: UserCheck,
+      action: handleNameTask
+    },
+    {
+      id: '5-referrals',
+      title: 'Get 5 Referrals',
+      description: 'Invite 5 friends to join XJR COIN',
+      reward: 100,
+      icon: Gift,
+      action: handleReferralTask,
+      progress: Math.min((user.referralCount || 0) / 5 * 100, 100),
+      currentCount: user.referralCount || 0,
+      targetCount: 5
+    }
+  ];
 
   const availableTasks = [
     {
@@ -94,6 +209,58 @@ const MiningTasks = ({ user, updateBalance }: MiningTasksProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Social & Profile Tasks */}
+      <Card className="mining-card mining-glow">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center">
+            <Gift className="mr-2 h-5 w-5 text-mining-cyan-400" />
+            Social & Profile Tasks
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {socialTasks.map((task) => {
+              const completed = isTaskCompleted(task.id);
+              const IconComponent = task.icon;
+              
+              return (
+                <div key={task.id} className="p-6 bg-mining-dark-700/50 rounded-lg border border-mining-cyan-500/20 hover:border-mining-cyan-500/40 transition-colors">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center space-x-3">
+                      <IconComponent className="h-6 w-6 text-mining-cyan-400" />
+                      <h3 className="font-semibold text-white text-lg">{task.title}</h3>
+                    </div>
+                    <Badge className={completed ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-mining-cyan-500/20 text-mining-cyan-400 border-mining-cyan-500/30'}>
+                      {completed ? 'Completed' : `${task.reward} XJR`}
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-gray-300 text-sm mb-4">{task.description}</p>
+                  
+                  {task.progress !== undefined && (
+                    <div className="space-y-2 mb-4">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-300">Progress</span>
+                        <span className="text-mining-cyan-400">{task.currentCount}/{task.targetCount}</span>
+                      </div>
+                      <Progress value={task.progress} className="h-2" />
+                    </div>
+                  )}
+                  
+                  <Button 
+                    className={`w-full ${completed ? 'mining-button opacity-50 cursor-not-allowed' : 'mining-button'}`}
+                    onClick={task.action}
+                    disabled={completed}
+                  >
+                    {completed ? 'Completed' : 'Claim Reward'}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Active Tasks */}
       <Card className="mining-card mining-glow">
         <CardHeader>
@@ -221,11 +388,11 @@ const MiningTasks = ({ user, updateBalance }: MiningTasksProps) => {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-300">Referrals</span>
-                  <span className="text-mining-cyan-400">3 this week</span>
+                  <span className="text-mining-cyan-400">{user.referralCount || 0} this week</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-300">Bonus Earned</span>
-                  <span className="text-mining-cyan-400">150 XJR</span>
+                  <span className="text-mining-cyan-400">{(user.referralCount || 0) * 50} XJR</span>
                 </div>
                 <p className="text-xs text-gray-400">Ongoing event</p>
               </div>

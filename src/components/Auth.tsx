@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,8 +39,20 @@ const Auth = ({ onAuthSuccess }: AuthProps) => {
           profileImage: null,
           referralCode: 'XJR-' + Math.random().toString(36).substr(2, 8).toUpperCase(),
           usedReferral: formData.referralCode,
-          lastClaimTime: null
+          lastClaimTime: null,
+          completedTasks: [],
+          referralCount: 0
         };
+
+        // If user used a referral code, increment the referrer's count
+        if (formData.referralCode) {
+          // In a real app, this would be handled by the backend
+          // For demo purposes, we'll just show a bonus message
+          toast({
+            title: "Referral Bonus!",
+            description: "You'll receive a bonus for using a referral code!",
+          });
+        }
 
         // Store user with password
         const userWithPassword = { ...userData, password: formData.password };
