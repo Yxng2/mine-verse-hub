@@ -4,15 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Activity, User, Users } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
-const MiningTasks = () => {
+interface MiningTasksProps {
+  user: any;
+  updateBalance: (newBalance: number) => void;
+}
+
+const MiningTasks = ({ user, updateBalance }: MiningTasksProps) => {
+  const { toast } = useToast();
+
+  const handleStartTask = (taskReward: number) => {
+    const newBalance = user.balance + taskReward;
+    updateBalance(newBalance);
+    toast({
+      title: "Task Completed!",
+      description: `You earned ${taskReward} XJR COIN!`,
+    });
+  };
+
   const availableTasks = [
     {
       id: 1,
       title: "Transaction Validation",
       description: "Validate blockchain transactions and earn rewards",
       difficulty: "Easy",
-      reward: "25 DMH",
+      reward: 25,
       timeEstimate: "15 minutes",
       participants: 156,
       category: "validation"
@@ -22,7 +39,7 @@ const MiningTasks = () => {
       title: "Network Security Challenge",
       description: "Contribute to network security through computational tasks",
       difficulty: "Medium",
-      reward: "75 DMH",
+      reward: 75,
       timeEstimate: "45 minutes",
       participants: 89,
       category: "security"
@@ -32,7 +49,7 @@ const MiningTasks = () => {
       title: "Block Mining Competition",
       description: "Compete with others to solve cryptographic puzzles",
       difficulty: "Hard",
-      reward: "200 DMH",
+      reward: 200,
       timeEstimate: "2 hours",
       participants: 234,
       category: "mining"
@@ -42,7 +59,7 @@ const MiningTasks = () => {
       title: "Community Verification",
       description: "Help verify community contributions and proposals",
       difficulty: "Easy",
-      reward: "30 DMH",
+      reward: 30,
       timeEstimate: "20 minutes",
       participants: 67,
       category: "community"
@@ -55,14 +72,14 @@ const MiningTasks = () => {
       title: "Daily Hash Challenge",
       progress: 78,
       timeLeft: "2h 15m",
-      reward: "100 DMH"
+      reward: "100 XJR"
     },
     {
       id: 2,
       title: "Weekly Mining Goal",
       progress: 45,
       timeLeft: "4 days",
-      reward: "500 DMH"
+      reward: "500 XJR"
     }
   ];
 
@@ -132,7 +149,7 @@ const MiningTasks = () => {
                 
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-center space-x-4 text-sm">
-                    <span className="text-mining-cyan-400 font-semibold">{task.reward}</span>
+                    <span className="text-mining-cyan-400 font-semibold">{task.reward} XJR</span>
                     <span className="text-gray-400">⏱ {task.timeEstimate}</span>
                   </div>
                   <div className="flex items-center text-sm text-gray-400">
@@ -141,7 +158,10 @@ const MiningTasks = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full mining-button">
+                <Button 
+                  className="w-full mining-button"
+                  onClick={() => handleStartTask(task.reward)}
+                >
                   Start Mining Task
                 </Button>
               </div>
@@ -162,11 +182,11 @@ const MiningTasks = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 bg-gradient-to-br from-mining-cyan-500/10 to-mining-blue-500/10 rounded-lg border border-mining-cyan-500/30">
               <h3 className="font-semibold text-white mb-2">Weekly Mining Marathon</h3>
-              <p className="text-gray-300 text-sm mb-4">Mine 1000 DMH collectively as a community</p>
+              <p className="text-gray-300 text-sm mb-4">Mine 1000 XJR collectively as a community</p>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-300">Progress</span>
-                  <span className="text-mining-cyan-400">742/1000 DMH</span>
+                  <span className="text-mining-cyan-400">742/1000 XJR</span>
                 </div>
                 <Progress value={74.2} className="h-2" />
                 <p className="text-xs text-gray-400">5 days remaining</p>
@@ -205,7 +225,7 @@ const MiningTasks = () => {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-300">Bonus Earned</span>
-                  <span className="text-mining-cyan-400">150 DMH</span>
+                  <span className="text-mining-cyan-400">150 XJR</span>
                 </div>
                 <p className="text-xs text-gray-400">Ongoing event</p>
               </div>

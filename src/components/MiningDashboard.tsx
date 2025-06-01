@@ -3,8 +3,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Activity, User, Users } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
-const MiningDashboard = () => {
+interface MiningDashboardProps {
+  user: any;
+  updateBalance: (newBalance: number) => void;
+}
+
+const MiningDashboard = ({ user, updateBalance }: MiningDashboardProps) => {
+  const { toast } = useToast();
+
+  const handleClaimReward = () => {
+    const newBalance = user.balance + 100;
+    updateBalance(newBalance);
+    toast({
+      title: "Reward Claimed!",
+      description: "You earned 100 XJR COIN!",
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Main Stats */}
@@ -15,7 +32,7 @@ const MiningDashboard = () => {
             <Activity className="h-4 w-4 text-mining-cyan-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">2,847 DMH</div>
+            <div className="text-2xl font-bold text-white">{user?.balance || 0} XJR</div>
             <p className="text-xs text-mining-cyan-400">+12.5% from last month</p>
           </CardContent>
         </Card>
@@ -49,7 +66,7 @@ const MiningDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">2h 34m</div>
-            <p className="text-xs text-mining-cyan-400">Next 100 DMH claim</p>
+            <p className="text-xs text-mining-cyan-400">Next 100 XJR claim</p>
           </CardContent>
         </Card>
       </div>
@@ -92,9 +109,9 @@ const MiningDashboard = () => {
             <CardTitle className="text-white">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full mining-button">
+            <Button className="w-full mining-button" onClick={handleClaimReward}>
               <Activity className="mr-2 h-4 w-4" />
-              Claim 100 DMH (Available in 2h 34m)
+              Claim 100 XJR (Available in 2h 34m)
             </Button>
             
             <Button variant="outline" className="w-full border-mining-cyan-500/30 text-mining-cyan-400 hover:bg-mining-cyan-500/10">
@@ -118,10 +135,10 @@ const MiningDashboard = () => {
         <CardContent>
           <div className="space-y-4">
             {[
-              { action: "Completed validation task", reward: "+25 DMH", time: "2 hours ago", status: "success" },
-              { action: "Block mining reward", reward: "+150 DMH", time: "5 hours ago", status: "success" },
-              { action: "Referral bonus", reward: "+50 DMH", time: "1 day ago", status: "success" },
-              { action: "Community challenge", reward: "+75 DMH", time: "2 days ago", status: "success" },
+              { action: "Completed validation task", reward: "+25 XJR", time: "2 hours ago", status: "success" },
+              { action: "Block mining reward", reward: "+150 XJR", time: "5 hours ago", status: "success" },
+              { action: "Referral bonus", reward: "+50 XJR", time: "1 day ago", status: "success" },
+              { action: "Community challenge", reward: "+75 XJR", time: "2 days ago", status: "success" },
             ].map((activity, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-mining-dark-700/50 rounded-lg border border-mining-cyan-500/10">
                 <div>
